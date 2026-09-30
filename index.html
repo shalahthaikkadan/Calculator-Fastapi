@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Calculator</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f2f2f2;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .calculator {
+            width: 300px;
+            background: #222;
+            padding: 20px;
+            border-radius: 15px;
+        }
+
+        #display {
+            width: 100%;
+            height: 60px;
+            font-size: 30px;
+            text-align: right;
+            margin-bottom: 15px;
+            box-sizing: border-box;
+            padding: 10px;
+        }
+
+        .buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+        }
+
+        button {
+            height: 55px;
+            font-size: 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .operator {
+            background: orange;
+        }
+
+        .clear {
+            background: #ff5555;
+        }
+
+        .equals {
+            background: #55aa55;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="calculator">
+
+    <input type="text" id="display" value="0" readonly>
+
+    <div class="buttons">
+
+        <button class="clear" onclick="clearDisplay()">C</button>
+        <button onclick="deleteNumber()">⌫</button>
+        <button class="operator" onclick="setOperator('/')">÷</button>
+        <button class="operator" onclick="setOperator('*')">×</button>
+
+        <button onclick="number(7)">7</button>
+        <button onclick="number(8)">8</button>
+        <button onclick="number(9)">9</button>
+        <button class="operator" onclick="setOperator('-')">−</button>
+
+        <button onclick="number(4)">4</button>
+        <button onclick="number(5)">5</button>
+        <button onclick="number(6)">6</button>
+        <button class="operator" onclick="setOperator('+')">+</button>
+
+        <button onclick="number(1)">1</button>
+        <button onclick="number(2)">2</button>
+        <button onclick="number(3)">3</button>
+        <button class="equals" onclick="calculate()">=</button>
+
+        <button onclick="number(0)" style="grid-column: span 2;">0</button>
+        <button onclick="number('.')">.</button>
+
+    </div>
+
+</div>
+
+
+<script>
+
+    let firstNumber = "";
+    let operator = "";
+    let secondNumber = "";
+
+    function number(value) {
+
+        let display = document.getElementById("display");
+
+        if (operator === "") {
+
+            if (display.value === "0") {
+                display.value = value;
+            } else {
+                display.value += value;
+            }
+
+            firstNumber = display.value;
+
+        } else {
+
+            if (secondNumber === "") {
+                display.value = value;
+            } else {
+                display.value += value;
+            }
+
+            secondNumber = display.value;
+        }
+    }
+
+
+    function setOperator(op) {
+
+        operator = op;
+
+        document.getElementById("display").value = "";
+
+    }
+
+
+    async function calculate() {
+
+        let x = Number(firstNumber);
+        let y = Number(secondNumber);
+
+        if (secondNumber === "") {
+            return;
+        }
+
+        let response = await fetch("/calculate", {
+
+            method: "POST",
+
+            headers: {
+                "Content-Type": "application/json"
+            },
+
+            body: JSON.stringify({
+                x: x,
+                y: y,
+                opr: operator
+            })
+
+        });
+
+        let data = await response.json();
+
+        if (data.error) {
+            document.getElementById("display").value = data.error;
+        } else {
+            document.getElementById("display").value = data.result;
+        }
+
+        firstNumber = data.result;
+        secondNumber = "";
+        operator = "";
+    }
+
+
+    function clearDisplay() {
+
+        document.getElementById("display").value = "0";
+
+        firstNumber = "";
+        secondNumber = "";
+        operator = "";
+    }
+
+
+    function deleteNumber() {
+
+        let display = document.getElementById("display");
+
+        display.value = display.value.slice(0, -1);
+
+        if (display.value === "") {
+            display.value = "0";
+        }
+    }
+
+</script>
+
+</body>
+</html>
