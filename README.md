@@ -77,10 +77,6 @@ Error example (division by zero):
 - [ ] Automated tests
 - [ ] Deployment
 
-## Author
-
-**Shalah**: [github.com/shalahthaikkadan](https://github.com/shalahthaikkadan)
-
 ## License
 
 Created for learning and educational purposes.
