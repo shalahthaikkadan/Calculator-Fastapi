@@ -1,33 +1,53 @@
+```html
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Calculator</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculator | FastAPI</title>
 
     <style>
+        * {
+            box-sizing: border-box;
+        }
+
         body {
             font-family: Arial, sans-serif;
-            background: #f2f2f2;
+            background: linear-gradient(135deg, #141e30, #243b55);
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
+            min-height: 100vh;
+            margin: 0;
         }
 
         .calculator {
-            width: 300px;
-            background: #222;
-            padding: 20px;
-            border-radius: 15px;
+            width: 320px;
+            padding: 22px;
+            background: #181818;
+            border-radius: 22px;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
+        }
+
+        .heading {
+            color: white;
+            text-align: center;
+            margin: 0 0 18px;
+            font-size: 21px;
         }
 
         #display {
             width: 100%;
-            height: 60px;
+            height: 75px;
+            margin-bottom: 18px;
+            padding: 12px;
+            border: none;
+            border-radius: 12px;
+            background: #292929;
+            color: white;
             font-size: 30px;
             text-align: right;
-            margin-bottom: 15px;
-            box-sizing: border-box;
-            padding: 10px;
+            outline: none;
         }
 
         .buttons {
@@ -37,23 +57,54 @@
         }
 
         button {
-            height: 55px;
-            font-size: 20px;
+            height: 57px;
             border: none;
-            border-radius: 8px;
+            border-radius: 12px;
+            background: #353535;
+            color: white;
+            font-size: 21px;
             cursor: pointer;
+            transition: 0.15s;
+        }
+
+        button:hover {
+            filter: brightness(1.2);
+        }
+
+        button:active {
+            transform: scale(0.95);
         }
 
         .operator {
-            background: orange;
+            background: #ff9f0a;
+            color: #111;
         }
 
         .clear {
-            background: #ff5555;
+            background: #e74c3c;
         }
 
         .equals {
-            background: #55aa55;
+            background: #22a06b;
+        }
+
+        .zero {
+            grid-column: span 2;
+        }
+
+        #status {
+            min-height: 18px;
+            margin: 12px 0 0;
+            color: #bdbdbd;
+            font-size: 12px;
+            text-align: center;
+        }
+
+        .footer {
+            color: #999;
+            text-align: center;
+            font-size: 12px;
+            margin-top: 12px;
         }
     </style>
 </head>
@@ -62,7 +113,10 @@
 
 <div class="calculator">
 
-    <input type="text" id="display" value="0" readonly>
+    <h2 class="heading">FastAPI Calculator</h2>
+
+    <input type="text" id="display" value="0" readonly
+           aria-label="Calculator display">
 
     <div class="buttons">
 
@@ -71,132 +125,191 @@
         <button class="operator" onclick="setOperator('/')">÷</button>
         <button class="operator" onclick="setOperator('*')">×</button>
 
-        <button onclick="number(7)">7</button>
-        <button onclick="number(8)">8</button>
-        <button onclick="number(9)">9</button>
+        <button onclick="number('7')">7</button>
+        <button onclick="number('8')">8</button>
+        <button onclick="number('9')">9</button>
         <button class="operator" onclick="setOperator('-')">−</button>
 
-        <button onclick="number(4)">4</button>
-        <button onclick="number(5)">5</button>
-        <button onclick="number(6)">6</button>
+        <button onclick="number('4')">4</button>
+        <button onclick="number('5')">5</button>
+        <button onclick="number('6')">6</button>
         <button class="operator" onclick="setOperator('+')">+</button>
 
-        <button onclick="number(1)">1</button>
-        <button onclick="number(2)">2</button>
-        <button onclick="number(3)">3</button>
+        <button onclick="number('1')">1</button>
+        <button onclick="number('2')">2</button>
+        <button onclick="number('3')">3</button>
         <button class="equals" onclick="calculate()">=</button>
 
-        <button onclick="number(0)" style="grid-column: span 2;">0</button>
+        <button class="zero" onclick="number('0')">0</button>
         <button onclick="number('.')">.</button>
 
     </div>
 
+    <p id="status">Ready</p>
+
+    <div class="footer">Powered by Python &amp; FastAPI</div>
+
 </div>
 
-
 <script>
+    const display = document.getElementById("display");
+    const status = document.getElementById("status");
 
     let firstNumber = "";
-    let operator = "";
     let secondNumber = "";
+    let operator = "";
+    let waitingForSecond = false;
+    let justCalculated = false;
 
     function number(value) {
-
-        let display = document.getElementById("display");
-
-        if (operator === "") {
-
-            if (display.value === "0") {
-                display.value = value;
-            } else {
-                display.value += value;
-            }
-
-            firstNumber = display.value;
-
-        } else {
-
-            if (secondNumber === "") {
-                display.value = value;
-            } else {
-                display.value += value;
-            }
-
-            secondNumber = display.value;
+        if (justCalculated && !operator) {
+            firstNumber = "";
+            secondNumber = "";
+            display.value = "0";
+            justCalculated = false;
         }
-    }
 
+        if (!operator) {
+            if (waitingForSecond) {
+                firstNumber = "";
+                display.value = "0";
+                waitingForSecond = false;
+            }
+
+            if (value === "." && firstNumber.includes(".")) return;
+
+            if (value === "." && firstNumber === "") {
+                firstNumber = "0.";
+            } else if (firstNumber === "0" && value !== ".") {
+                firstNumber = value;
+            } else {
+                firstNumber += value;
+            }
+
+            display.value = firstNumber;
+        } else {
+            if (value === "." && secondNumber.includes(".")) return;
+
+            if (value === "." && secondNumber === "") {
+                secondNumber = "0.";
+            } else if (secondNumber === "0" && value !== ".") {
+                secondNumber = value;
+            } else {
+                secondNumber += value;
+            }
+
+            display.value = secondNumber;
+        }
+
+        status.textContent = "Ready";
+    }
 
     function setOperator(op) {
+        if (firstNumber === "" || firstNumber === ".") return;
+
+        if (operator && secondNumber !== "") {
+            calculate();
+        }
 
         operator = op;
-
-        document.getElementById("display").value = "";
-
+        secondNumber = "";
+        waitingForSecond = false;
+        justCalculated = false;
+        status.textContent = "Enter the second number";
     }
 
-
     async function calculate() {
+        if (!operator || secondNumber === "") return;
 
-        let x = Number(firstNumber);
-        let y = Number(secondNumber);
+        const x = Number(firstNumber);
+        const y = Number(secondNumber);
+        const opr = operator;
 
-        if (secondNumber === "") {
+        if (!Number.isFinite(x) || !Number.isFinite(y)) {
+            display.value = "Invalid input";
             return;
         }
 
-        let response = await fetch("/calculate", {
-
-            method: "POST",
-
-            headers: {
-                "Content-Type": "application/json"
-            },
-
-            body: JSON.stringify({
-                x: x,
-                y: y,
-                opr: operator
-            })
-
-        });
-
-        let data = await response.json();
-
-        if (data.error) {
-            document.getElementById("display").value = data.error;
-        } else {
-            document.getElementById("display").value = data.result;
+        if (opr === "/" && y === 0) {
+            display.value = "Cannot divide by 0";
+            status.textContent = "Choose a new calculation";
+            firstNumber = "";
+            secondNumber = "";
+            operator = "";
+            waitingForSecond = true;
+            justCalculated = false;
+            return;
         }
 
-        firstNumber = data.result;
-        secondNumber = "";
-        operator = "";
+        status.textContent = "Calculating...";
+
+        try {
+            const response = await fetch("/calculate", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    x: x,
+                    y: y,
+                    opr: opr
+                })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok || data.error) {
+                throw new Error(data.error || "Calculation failed");
+            }
+
+            if (data.result === undefined || !Number.isFinite(Number(data.result))) {
+                throw new Error("Invalid response from server");
+            }
+
+            firstNumber = String(data.result);
+            secondNumber = "";
+            operator = "";
+            display.value = firstNumber;
+            waitingForSecond = false;
+            justCalculated = true;
+            status.textContent = "Calculation complete";
+
+        } catch (error) {
+            display.value = "Error";
+            status.textContent = error.message || "Cannot connect to FastAPI";
+            firstNumber = "";
+            secondNumber = "";
+            operator = "";
+            waitingForSecond = true;
+            justCalculated = false;
+        }
     }
 
-
     function clearDisplay() {
-
-        document.getElementById("display").value = "0";
-
         firstNumber = "";
         secondNumber = "";
         operator = "";
+        waitingForSecond = false;
+        justCalculated = false;
+        display.value = "0";
+        status.textContent = "Ready";
     }
-
 
     function deleteNumber() {
+        justCalculated = false;
 
-        let display = document.getElementById("display");
-
-        display.value = display.value.slice(0, -1);
-
-        if (display.value === "") {
-            display.value = "0";
+        if (operator && secondNumber !== "") {
+            secondNumber = secondNumber.slice(0, -1);
+            display.value = secondNumber || "0";
+        } else if (!operator && firstNumber !== "") {
+            firstNumber = firstNumber.slice(0, -1);
+            display.value = firstNumber || "0";
         }
-    }
 
+        status.textContent = "Ready";
+    }
 </script>
 
 </body>
 </html>
+```
