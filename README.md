@@ -1,6 +1,6 @@
 # 🧮 Calculator FastAPI
 
-A simple full-stack calculator built with **FastAPI** and **HTML, CSS, JavaScript**. The frontend sends calculations to a FastAPI backend as JSON and displays the result.
+A simple full-stack calculator built with **FastAPI** and **HTML, CSS, JavaScript**. The frontend sends calculations to a FastAPI backend as JSON and displays the result
 
 ## Features
 
